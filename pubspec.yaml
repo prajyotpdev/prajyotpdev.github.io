@@ -42,9 +42,9 @@ dev_dependencies:
   build_web_compilers: ^4.0.10
   jaspr_builder: ^0.22.0
   # jaspr_lints: ^0.1.1  # REMOVED - causing dependency conflicts
-  lints: 5.1.1
+  lints: 4.0.0
   json_serializable: ^6.7.1
-  flutter_lints: ^5.0.0
+  flutter_lints: ^4.0.0
 
 jaspr:
   mode: static
