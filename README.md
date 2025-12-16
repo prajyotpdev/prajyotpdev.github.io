@@ -1,6 +1,6 @@
 # prajyotpawar
 
-A new Flutter project.
+Deployed version of site
 
 ## Getting Started
 
