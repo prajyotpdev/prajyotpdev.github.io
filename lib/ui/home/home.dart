@@ -35,50 +35,50 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  late final web.EventListener _mouseLeaveListener;
-
-  late final web.EventListener _mouseEnterListener;
-
-  double dx = 0.0;
-
-  double dy = 0.0;
-
-  bool isOut = true;
+  // late final web.EventListener _mouseLeaveListener;
+  //
+  // late final web.EventListener _mouseEnterListener;
+  //
+  // double dx = 0.0;
+  //
+  // double dy = 0.0;
+  //
+  // bool isOut = true;
 
   @override
   void initState() {
     super.initState();
-
-    final docElement = web.document.documentElement;
-
-    if (docElement != null) {
-      // Create listeners
-      _mouseLeaveListener = ((web.Event event) {
-        setState(() {
-          isOut = true;
-        });
-      }).toJS;
-
-      _mouseEnterListener = ((web.Event event) {
-        setState(() {
-          isOut = false;
-        });
-      }).toJS;
-
-      // Add listeners
-      docElement.addEventListener('mouseleave', _mouseLeaveListener);
-      docElement.addEventListener('mouseenter', _mouseEnterListener);
-    }
+    //
+    // final docElement = web.document.documentElement;
+    //
+    // if (docElement != null) {
+    //   // Create listeners
+    //   _mouseLeaveListener = ((web.Event event) {
+    //     setState(() {
+    //       isOut = true;
+    //     });
+    //   }).toJS;
+    //
+    //   _mouseEnterListener = ((web.Event event) {
+    //     setState(() {
+    //       isOut = false;
+    //     });
+    //   }).toJS;
+    //
+    //   // Add listeners
+    //   docElement.addEventListener('mouseleave', _mouseLeaveListener);
+    //   docElement.addEventListener('mouseenter', _mouseEnterListener);
+    // }
   }
 
   @override
   void dispose() {
-    final docElement = web.document.documentElement;
+    // final docElement = web.document.documentElement;
 
-    if (docElement != null) {
-      docElement.removeEventListener('mouseleave', _mouseLeaveListener);
-      docElement.removeEventListener('mouseenter', _mouseEnterListener);
-    }
+    // if (docElement != null) {
+    //   docElement.removeEventListener('mouseleave', _mouseLeaveListener);
+    //   docElement.removeEventListener('mouseenter', _mouseEnterListener);
+    // }
 
     super.dispose();
   }
@@ -206,7 +206,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         onPressed: () async {
-          final Uri url = Uri.parse('https://firebasestorage.googleapis.com/v0/b/rekord-48b83.firebasestorage.app/o/documents%2FPrajyot_Pawar_Resume_SDE_A4.pdf?alt=media&token=ffc588e2-03e6-40bd-8fc5-df04fe009115');
+          final Uri url = Uri.parse('https://firebasestorage.googleapis.com/v0/b/rekord-48b83.firebasestorage.app/o/documents%2FPrajyot_Pawar_Resume.pdf?alt=media&token=171a2817-0da5-47c1-9c2c-4866e653ab36');
           if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Could not open resume')),
