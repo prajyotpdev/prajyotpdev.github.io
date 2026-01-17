@@ -3,7 +3,7 @@ import 'dart:js_interop';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../constants/assets.dart';
@@ -13,6 +13,7 @@ import '../../models/education.dart';
 import '../../utils/screen/screen_utils.dart';
 import '../../widgets/responsive_widget.dart';
 import 'package:web/web.dart' as web;
+import 'dart:html' as html;
 
 class HomePage extends StatefulWidget {
   @override
@@ -213,16 +214,25 @@ class _HomePageState extends State<HomePage> {
           //         'docs/flutter/Prajyot_Pawar_Resume.pdf',
           //       ),
           //     ),));
+          showPdfInNewTab('docs/flutter/Prajyot_Pawar_Resume.pdf');
 
-          final Uri url = Uri.parse('https://firebasestorage.googleapis.com/v0/b/rekord-48b83.firebasestorage.app/o/documents%2FPrajyot_Pawar_Resume.pdf?alt=media&token=be454d94-5c5a-4d9c-863a-2d97265c05a1');
-          if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Could not open resume')),
-            );
-          }
+          // final Uri url = Uri.parse('https://firebasestorage.googleapis.com/v0/b/rekord-48b83.firebasestorage.app/o/documents%2FPrajyot_Pawar_Resume.pdf?alt=media&token=be454d94-5c5a-4d9c-863a-2d97265c05a1');
+          // if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+          //   ScaffoldMessenger.of(context).showSnackBar(
+          //     const SnackBar(content: Text('Could not open resume')),
+          //   );
+          // }
         }
       ),
     ];
+  }
+
+  void showPdfInNewTab(String assetPath) async {
+    final bytes = await rootBundle.load(assetPath);
+    final blob = html.Blob([bytes.buffer.asUint8List()], 'application/pdf');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+
+    html.window.open(url, 'PrajyotPawarResume');
   }
 
   Widget _buildBody(BuildContext context, BoxConstraints constraints) {
