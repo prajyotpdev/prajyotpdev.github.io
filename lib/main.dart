@@ -1,46 +1,35 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
+import 'package:firebase_core/firebase_core.dart';
 import 'package:prajyotpawar/ui/home/home.dart';
-import 'package:prajyotpawar/utils/screen/screen_utils.dart';
 
-void main() {
-  runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+
+    await Firebase.initializeApp();
+  } on FirebaseException catch (e) {
+    print("Firebase Error: ${e.code} - ${e.message}");
+  } catch (e) {
+    print("Generic Error: $e");
+  }
+
+  runApp(const MinecraftPortfolio());
 }
 
-class MyApp extends StatelessWidget {
+class MinecraftPortfolio extends StatelessWidget {
+  const MinecraftPortfolio({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-
-    return MaterialApp(
-      scrollBehavior: const MaterialScrollBehavior().copyWith(scrollbars: false),
+    return const MaterialApp(
+      title: 'Minecraft Portfolio',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-          brightness: Brightness.light,
-      ),
-      home: MyAppChild(),
+      // theme: ThemeData(
+      //   fontFamily: 'VT323', // Minecraft-like font
+      //   scaffoldBackgroundColor: const Color(0xFF1a1a2e),
+      // ),
+      home: PortfolioHome(),
     );
   }
 }
 
-class MyAppChild extends StatefulWidget {
-
-  @override
-  _MyAppChildState createState() => _MyAppChildState();
-}
-
-class _MyAppChildState extends State<MyAppChild> {
-
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    ScreenUtil.getInstance().init(context);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return HomePage();
-  }
-}

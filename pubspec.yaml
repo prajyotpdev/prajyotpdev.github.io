@@ -31,6 +31,8 @@ dependencies:
   url_launcher: ^6.2.6
   cached_network_image: ^3.4.1
   web: ^1.1.1
+  cloud_firestore: ^6.1.2
+  google_fonts: ^7.1.0
 
 
 dev_dependencies:

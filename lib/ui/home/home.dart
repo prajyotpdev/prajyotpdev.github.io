@@ -1,639 +1,491 @@
-import 'dart:js_interop';
-
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../constants/assets.dart';
-import '../../constants/fonts.dart';
-import '../../constants/strings.dart';
-import '../../models/education.dart';
-import '../../utils/screen/screen_utils.dart';
-import '../../widgets/responsive_widget.dart';
-import 'package:web/web.dart' as web;
-import 'dart:html' as html;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-class HomePage extends StatefulWidget {
+class PortfolioHome extends StatefulWidget {
+  const PortfolioHome({Key? key}) : super(key: key);
+
   @override
-  State<HomePage> createState() => _HomePageState();
-
-  static const experienceList = [
-    Experience('Aug 2023', 'Present', 'Revergon Solutions', 'Software Engineer'),
-    Experience('July 2023', 'Aug 2023', 'Arpa Studios', 'Software Engineer'),
-  ];
+  State<PortfolioHome> createState() => _PortfolioHomeState();
 }
 
-class _HomePageState extends State<HomePage> {
-  void _launchUrl(String urlINput) async {
-    final Uri url = Uri.parse(urlINput);
-    if (await canLaunchUrl(url)) {
-      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-        debugPrint('Could not launch $url');
-      }
-    } else {
-      throw 'Could not launch $url';
-    }
-  }
+class _PortfolioHomeState extends State<PortfolioHome>
+    with TickerProviderStateMixin {
+  late AnimationController _floatingController;
+  late AnimationController _fadeController;
+  late Animation<double> _floatingAnimation;
+  late Animation<double> _fadeAnimation;
 
-  // late final web.EventListener _mouseLeaveListener;
-  //
-  // late final web.EventListener _mouseEnterListener;
-  //
-  // double dx = 0.0;
-  //
-  // double dy = 0.0;
-  //
-  // bool isOut = true;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
     super.initState();
-    //
-    // final docElement = web.document.documentElement;
-    //
-    // if (docElement != null) {
-    //   // Create listeners
-    //   _mouseLeaveListener = ((web.Event event) {
-    //     setState(() {
-    //       isOut = true;
-    //     });
-    //   }).toJS;
-    //
-    //   _mouseEnterListener = ((web.Event event) {
-    //     setState(() {
-    //       isOut = false;
-    //     });
-    //   }).toJS;
-    //
-    //   // Add listeners
-    //   docElement.addEventListener('mouseleave', _mouseLeaveListener);
-    //   docElement.addEventListener('mouseenter', _mouseEnterListener);
-    // }
+
+    _floatingController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..forward();
+
+    _floatingAnimation = Tween<double>(begin: -10, end: 10).animate(
+      CurvedAnimation(parent: _floatingController, curve: Curves.easeInOut),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
+    );
   }
 
   @override
   void dispose() {
-    // final docElement = web.document.documentElement;
-
-    // if (docElement != null) {
-    //   docElement.removeEventListener('mouseleave', _mouseLeaveListener);
-    //   docElement.removeEventListener('mouseenter', _mouseEnterListener);
-    // }
-
+    _floatingController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Color(0xFFF7F8FA),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: (ScreenUtil.getInstance().setWidth(108))), //144
-        child:Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            titleSpacing: 0.0,
-            title: _buildTitle(),
-            backgroundColor: Colors.transparent,
-            elevation: 0.0,
-            actions: !ResponsiveWidget.isSmallScreen(context) ? _buildActions() : null,
-          ),
-          drawer: ResponsiveWidget.isSmallScreen(context)
-              ? Drawer(
-            child: ListView(padding: const EdgeInsets.all(20), children: _buildActions()),
-          )
-              : null,
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              return _buildBody(context, constraints);
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context) {
-    return AppBar(
-      titleSpacing: 0.0,
-      title: _buildTitle(),
-      backgroundColor: Colors.transparent,
-      elevation: 0.0,
-      actions: !ResponsiveWidget.isSmallScreen(context) ? _buildActions() : null,
-    );
-  }
-
-  Widget _buildTitle() {
-    return RichText(
-      text: TextSpan(
-        // Note: Styles for TextSpans must be explicitly defined.
-        // Child text spans will inherit styles from parent
-        style: TextStyle(fontSize: 14.0, color: Colors.black),
-        children: <TextSpan>[
-          TextSpan(
-            text: Strings.portfoli,
-            style: TextStyle(
-              fontFamily: Fonts.product,
-              color: Color(0xFF45405B),
-              fontSize: 22.0,
-              //22.0
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
-            ),
-          ),
-          TextSpan(
-            text: Strings.o,
-            style: TextStyle(
-              fontFamily: Fonts.product,
-              color: Color(0xFF45405B),
-              fontSize: 22.0,
-              //22.0
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
-            ).copyWith(color: Color(0xFF50AFC0)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildActions() {
-    return <Widget>[
-      MaterialButton(
-        child: Text(
-          Strings.menu_home,
-          style: TextStyle(
-            fontFamily: Fonts.product,
-            fontSize: 12.0, //12,.0
-            letterSpacing: 1.0,
-            color: Color(0xFF45405B),
-          ).copyWith(color: Color(0xFF50AFC0)),
-        ),
-        onPressed: () {},
-      ),
-      MaterialButton(
-        child: Text(
-          Strings.menu_projects,
-          style: TextStyle(
-            fontFamily: Fonts.product,
-            fontSize: 12.0, //12,.0
-            letterSpacing: 1.0,
-            color: Color(0xFF45405B),
-          ),
-        ),
-        onPressed: () {},
-      ),
-      MaterialButton(
-        child: Text(
-          Strings.menu_blogs,
-          style: TextStyle(
-            fontFamily: Fonts.product,
-            fontSize: 12.0, //12,.0
-            letterSpacing: 1.0,
-            color: Color(0xFF45405B),
-          ),
-        ),
-        onPressed: () {},
-      ),
-      MaterialButton(
-        child: Text(
-          Strings.menu_resume,
-          style: TextStyle(
-            fontFamily: Fonts.product,
-            fontSize: 12.0, //12,.0
-            letterSpacing: 1.0,
-            color: Color(0xFF45405B),
-          ),
-        ),
-        onPressed: () async {
-          // Navigator.push(context,
-          //     MaterialPageRoute(builder: (context) => Scaffold(
-          //       body: SfPdfViewer.asset(
-          //         'docs/flutter/Prajyot_Pawar_Resume.pdf',
-          //       ),
-          //     ),));
-          showPdfInNewTab('docs/flutter/Prajyot_Pawar_Resume.pdf');
-
-          // final Uri url = Uri.parse('https://firebasestorage.googleapis.com/v0/b/rekord-48b83.firebasestorage.app/o/documents%2FPrajyot_Pawar_Resume.pdf?alt=media&token=be454d94-5c5a-4d9c-863a-2d97265c05a1');
-          // if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-          //   ScaffoldMessenger.of(context).showSnackBar(
-          //     const SnackBar(content: Text('Could not open resume')),
-          //   );
-          // }
-        }
-      ),
-    ];
-  }
-
-  void showPdfInNewTab(String assetPath) async {
-    final bytes = await rootBundle.load(assetPath);
-    final blob = html.Blob([bytes.buffer.asUint8List()], 'application/pdf');
-    final url = html.Url.createObjectUrlFromBlob(blob);
-
-    html.window.open(url, 'PrajyotPawarResume');
-  }
-
-  Widget _buildBody(BuildContext context, BoxConstraints constraints) {
-    return SingleChildScrollView(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(minWidth: constraints.maxWidth, minHeight: constraints.maxHeight),
-        child: ResponsiveWidget(
-          largeScreen: _buildLargeScreen(context),
-          mediumScreen: _buildMediumScreen(context),
-          smallScreen: _buildSmallScreen(context),
-        ),
-      ),
-    );
-  }
-
-  Widget  _buildLargeScreen(BuildContext context) {
-    return IntrinsicHeight(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: <Widget>[
-          Expanded(
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Expanded(flex: 1, child: _buildContent(context)),
-                Expanded(flex:1,child: _buildIllustration(context)),
-              ],
-            ),
-          ),
-          SizedBox(height: ResponsiveWidget.isSmallScreen(context) ? 24.0 : 48.0),
-          ResponsiveWidget.isSmallScreen(context)
-              ? Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[_buildExperience(), SizedBox(height: 24.0), _buildSkills(context)],
-          )
-              : _buildSkillsAndExperience(context),
-          _buildFooter(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMediumScreen(BuildContext context) {
-    return IntrinsicHeight(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: <Widget>[
-          Expanded(
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              children: <Widget>[
-                Expanded(flex: 1, child: _buildContent(context)),
-                Expanded(flex:1,child: _buildIllustration(context)),],
-            ),
-          ),
-          SizedBox(height: ResponsiveWidget.isSmallScreen(context) ? 24.0 : 48.0),
-          ResponsiveWidget.isSmallScreen(context)
-              ? Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[_buildExperience(), SizedBox(height: 24.0), _buildSkills(context)],
-          )
-              : _buildSkillsAndExperience(context),
-          _buildFooter(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSmallScreen(BuildContext context) {
-    return IntrinsicHeight(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Expanded(flex: 1, child: _buildContent(context)),
-          SizedBox(height: ResponsiveWidget.isSmallScreen(context) ? 12.0 : 0.0),
-          ResponsiveWidget.isSmallScreen(context)
-              ? Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[_buildExperience(), SizedBox(height: 24.0), _buildSkills(context)],
-          )
-              : _buildSkillsAndExperience(context),
-          const Divider(),
-          _buildCopyRightText(context),
-          SizedBox(height: ResponsiveWidget.isSmallScreen(context) ? 12.0 : 0.0),
-          _buildSocialIcons(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIllustration(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    return CachedNetworkImage(
-      imageUrl: Assets.programmer3,
-      height: screenWidth * 0.24, // Adjust ratio as needed
-      placeholder: (context, url) => SizedBox(height:50,width:50,child: const CircularProgressIndicator()),
-      errorWidget: (context, url, error) => const Icon(Icons.error),
-    );
-  }
-
-  Widget _buildContent(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        SizedBox(height: ResponsiveWidget.isSmallScreen(context) ? 24.0 : 200.0),
-        _buildAboutMe(context),
-        SizedBox(height: 4.0),
-        _buildHeadline(context),
-        SizedBox(height: ResponsiveWidget.isSmallScreen(context) ? 12.0 : 24.0),
-        _buildSummary(),
-      ],
-    );
-  }
-
-  Widget _buildAboutMe(BuildContext context) {
-    final isSmall = ResponsiveWidget.isSmallScreen(context);
-    return RichText(
-      text: TextSpan(
-        style: const TextStyle(fontSize: 14.0, color: Colors.black),
-        children: <TextSpan>[
-          TextSpan(
-            text: Strings.about,
-            style: TextStyle(
-              fontFamily: Fonts.nexa_light,
-              color: const Color(0xFF45405B),
-              fontSize: isSmall ? 36.0 : 45.0,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
-            ),
-          ),
-          TextSpan(
-            text: Strings.me,
-            style: TextStyle(
-              fontFamily: Fonts.nexa_bold,
-              color: const Color(0xFF50AFC0),
-              fontSize: isSmall ? 36.0 : 45.0,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeadline(BuildContext context) {
-    return Text(
-      ResponsiveWidget.isSmallScreen(context) ? Strings.headline : Strings.headline.replaceFirst(RegExp(r' f'), '\nf'),
-      style: TextStyle(
-        color: Color(0xFF45405B),
-        fontFamily: Fonts.product,
-        fontSize: 17.0, //17.0
-        letterSpacing: 1.2,
-      ),
-    );
-  }
-
-  Widget _buildSummary() {
-    return Padding(
-      padding: EdgeInsets.only(right: 80.0),
-      child: Text(
-        Strings.summary,
-        style: TextStyle(
-          fontFamily: Fonts.product,
-          color: Color(0xFF85819C),
-          height: 1.5,
-          fontSize: 12.0,
-          //12.0
-          letterSpacing: 1.0,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSkillsAndExperience(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Expanded(flex: 1, child: _buildExperience()),
-        SizedBox(width: 40.0),
-        Expanded(flex: 1, child: _buildSkills(context)),
-      ],
-    );
-  }
-
-  final skills = ['Flutter', 'Dart', 'AWS', 'Node.js', 'C++', 'Docker', 'Python', 'Solidity'];
-
-  Widget _buildSkills(BuildContext context) {
-    final List<Widget> widgets = skills
-        .map((skill) => Padding(padding: EdgeInsets.only(right: 8.0, top: 3), child: _buildSkillChip(context, skill)))
-        .toList();
-
-    return Column(
-      mainAxisSize: MainAxisSize.max,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _buildSkillsContainerHeading(),
-        Wrap(children: widgets),
-        //        _buildNavigationArrows(),
-      ],
-    );
-  }
-
-  Widget _buildSkillsContainerHeading() {
-    return Text(
-      Strings.skills_i_have,
-      style: TextStyle(
-        color: Color(0xFF45405B),
-        fontFamily: Fonts.product,
-        fontSize: 17.0, //17.0
-        letterSpacing: 1.2,
-      ),
-    );
-  }
-
-  Widget _buildSkillChip(BuildContext context, String label) {
-    return Chip(
-      label: Text(
-        label,
-        style: TextStyle(
-          fontFamily: Fonts.product,
-          color: Color(0xFF85819C),
-          height: 1.5,
-          fontSize: 12.0,
-          //12.0
-          letterSpacing: 1.0,
-        ).copyWith(fontSize: ResponsiveWidget.isSmallScreen(context) ? 10.0 : 11.0),
-      ),
-    );
-  }
-
-  Widget _buildExperience() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _buildExperienceContainerHeading(),
-        _buildExperienceSummary(),
-        SizedBox(height: 8.0),
-        _buildExperienceTimeline(),
-      ],
-    );
-  }
-
-  Widget _buildExperienceContainerHeading() {
-    return Text(
-      Strings.experience,
-      style: TextStyle(
-        color: Color(0xFF45405B),
-        fontFamily: Fonts.product,
-        fontSize: 17.0, //17.0
-        letterSpacing: 1.2,
-      ),
-    );
-  }
-
-  Widget _buildExperienceSummary() {
-    return Text(
-      'Flutter-focused Software Engineer with 2.5+ years of experience developing and deploying high-performance mobile applications.',
-      style: TextStyle(
-        fontFamily: Fonts.product,
-        color: Color(0xFF85819C),
-        height: 1.5,
-        fontSize: 12.0,
-        //12.0
-        letterSpacing: 1.0,
-      ),
-    );
-  }
-
-  Widget _buildExperienceTimeline() {
-    final List<Widget> widgets = HomePage.experienceList.map((experience) => _buildExperienceTile(experience)).toList();
-    return Column(children: widgets);
-  }
-
-  Widget _buildExperienceTile(Experience experience) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Text(
-            '${experience.post}',
-            style: TextStyle(
-              fontFamily: Fonts.product,
-              color: Color(0xFF45405B),
-              height: 1.5,
-              fontSize: 15.0,
-              //15.0
-              letterSpacing: 1.0,
-            ),
-          ),
-          Text(
-            '${experience.organization}',
-            style: TextStyle(
-              fontFamily: Fonts.product,
-              color: Color(0xFF85819C),
-              height: 1.5,
-              fontSize: 12.0,
-              //12.0
-              letterSpacing: 1.0,
-            ).copyWith(color: Color(0xFF45405B)),
-          ),
-          Text(
-            '${experience.from}-${experience.to}',
-            style: TextStyle(
-              fontFamily: Fonts.product,
-              color: Color(0xFF85819C),
-              height: 1.5,
-              fontSize: 12.0,
-              //12.0
-              letterSpacing: 1.0,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Footer Methods:------------------------------------------------------------
-  Widget _buildFooter(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        const Divider(),
-        Padding(
-          padding: EdgeInsets.all(12.0),
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Align(child: _buildCopyRightText(context), alignment: Alignment.centerLeft),
-              Align(child: _buildSocialIcons(), alignment: Alignment.centerRight),
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF1a1a2e),
+              Color(0xFF16213e),
+              Color(0xFF0f3460),
             ],
           ),
         ),
-      ],
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildHeroSection(),
+              _buildAboutSection(),
+              _buildProjectsSection(),
+              _buildSkillsSection(),
+              _buildContactSection(),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildCopyRightText(BuildContext context) {
+  Widget _buildHeroSection() {
+    return Container(
+      height: MediaQuery.of(context).size.height,
+      padding: const EdgeInsets.all(20),
+      child: Center(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedBuilder(
+                animation: _floatingAnimation,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, _floatingAnimation.value),
+                    child: child,
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    border: Border.all(color: const Color(0xFF00ff41), width: 4),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF00ff41).withOpacity(0.5),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: const Text(
+                    '👾',
+                    style: TextStyle(fontSize: 100),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+              _buildPixelText(
+                'PLAYER ONE',
+                60,
+                const Color(0xFFffd700),
+              ),
+              const SizedBox(height: 20),
+              _buildPixelText(
+                'Full Stack Developer & Game Creator',
+                24,
+                const Color(0xFF00ff41),
+              ),
+              const SizedBox(height: 60),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildGameButton('VIEW PROJECTS', Icons.gamepad, () {
+                    // Navigate to projects
+                  }),
+                  const SizedBox(width: 20),
+                  _buildGameButton('CONTACT ME', Icons.mail, () {
+                    // Navigate to contact
+                  }),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAboutSection() {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        children: [
+          _buildSectionTitle('ABOUT ME'),
+          const SizedBox(height: 40),
+          Container(
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              color: Colors.black38,
+              border: Border.all(color: const Color(0xFF00d4ff), width: 4),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00d4ff).withOpacity(0.3),
+                  blurRadius: 15,
+                ),
+              ],
+            ),
+            child: _buildPixelText(
+              'I\'m a passionate developer who loves creating games and applications. '
+                  'With expertise in Flutter, Firebase, and game development, I bring '
+                  'ideas to life with vibrant designs and smooth animations.',
+              20,
+              Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProjectsSection() {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        children: [
+          _buildSectionTitle('PROJECTS'),
+          const SizedBox(height: 40),
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('projects').snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return _buildProjectCard(
+                  'Epic Adventure Game',
+                  'A multiplayer game built with Unity and Firebase',
+                  ['Unity', 'C#', 'Firebase'],
+                  const Color(0xFFff6b6b),
+                );
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const CircularProgressIndicator(
+                  color: Color(0xFF00ff41),
+                );
+              }
+
+              // If no Firebase data, show default projects
+              return Column(
+                children: [
+                  _buildProjectCard(
+                    'Epic Adventure Game',
+                    'A multiplayer game built with Unity and Firebase',
+                    ['Unity', 'C#', 'Firebase'],
+                    const Color(0xFFff6b6b),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildProjectCard(
+                    'Portfolio App',
+                    'Beautiful portfolio with Minecraft aesthetics',
+                    ['Flutter', 'Dart', 'Firebase'],
+                    const Color(0xFF4ecdc4),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildProjectCard(
+                    'Task Manager',
+                    'Real-time task management application',
+                    ['Flutter', 'Firebase', 'Firestore'],
+                    const Color(0xFFffd700),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProjectCard(
+      String title, String description, List<String> tech, Color color) {
+    return TweenAnimationBuilder(
+      duration: const Duration(milliseconds: 800),
+      tween: Tween<double>(begin: 0, end: 1),
+      builder: (context, double value, child) {
+        return Transform.scale(
+          scale: value,
+          child: Opacity(
+            opacity: value,
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(25),
+        decoration: BoxDecoration(
+          color: Colors.black38,
+          border: Border.all(color: color, width: 4),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.4),
+              blurRadius: 15,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildPixelText(title, 28, color),
+            const SizedBox(height: 15),
+            _buildPixelText(description, 18, Colors.white70),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: tech
+                  .map((t) => Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 15, vertical: 8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  border: Border.all(color: color, width: 2),
+                ),
+                child: _buildPixelText(t, 16, color),
+              ))
+                  .toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkillsSection() {
+    final skills = [
+      {'name': 'Flutter', 'level': 0.9, 'color': const Color(0xFF00d4ff)},
+      {'name': 'Firebase', 'level': 0.85, 'color': const Color(0xFFffa500)},
+      {'name': 'Dart', 'level': 0.88, 'color': const Color(0xFF00ff41)},
+      {'name': 'Unity', 'level': 0.75, 'color': const Color(0xFFff6b6b)},
+      {'name': 'UI/UX', 'level': 0.8, 'color': const Color(0xFFffd700)},
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        children: [
+          _buildSectionTitle('SKILLS'),
+          const SizedBox(height: 40),
+          ...skills.map((skill) => _buildSkillBar(
+            skill['name'] as String,
+            skill['level'] as double,
+            skill['color'] as Color,
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkillBar(String name, double level, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 25),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildPixelText(name, 22, color),
+          const SizedBox(height: 10),
+          TweenAnimationBuilder(
+            duration: const Duration(milliseconds: 1500),
+            tween: Tween<double>(begin: 0, end: level),
+            builder: (context, double value, child) {
+              return Stack(
+                children: [
+                  Container(
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.black38,
+                      border: Border.all(color: color, width: 3),
+                    ),
+                  ),
+                  FractionallySizedBox(
+                    widthFactor: value,
+                    child: Container(
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.7),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withOpacity(0.5),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactSection() {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        children: [
+          _buildSectionTitle('CONTACT'),
+          const SizedBox(height: 40),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildSocialButton(Icons.email, const Color(0xFFff6b6b)),
+              const SizedBox(width: 20),
+              _buildSocialButton(Icons.code, const Color(0xFF00ff41)),
+              const SizedBox(width: 20),
+              _buildSocialButton(Icons.link, const Color(0xFF00d4ff)),
+            ],
+          ),
+          const SizedBox(height: 60),
+          _buildPixelText(
+            '© 2024 Player One. Game On!',
+            18,
+            Colors.white54,
+          ),
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGameButton(String text, IconData icon, VoidCallback onPressed) {
+    return TweenAnimationBuilder(
+      duration: const Duration(milliseconds: 200),
+      tween: Tween<double>(begin: 1, end: 1),
+      builder: (context, double scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: GestureDetector(
+            onTapDown: (_) {},
+            onTapUp: (_) {
+              onPressed();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF00ff41), Color(0xFF00cc33)],
+                ),
+                border: Border.all(color: Colors.black, width: 4),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00ff41).withOpacity(0.5),
+                    blurRadius: 15,
+                    offset: const Offset(0, 4),
+                  ),
+                  const BoxShadow(
+                    color: Colors.black54,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: Colors.black, size: 24),
+                  const SizedBox(width: 10),
+                  _buildPixelText(text, 20, Colors.black),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSocialButton(IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.black38,
+        border: Border.all(color: color, width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Icon(icon, color: color, size: 30),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.black54,
+        border: Border.all(color: const Color(0xFFffd700), width: 4),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFffd700).withOpacity(0.5),
+            blurRadius: 15,
+          ),
+        ],
+      ),
+      child: _buildPixelText(title, 36, const Color(0xFFffd700)),
+    );
+  }
+
+  Widget _buildPixelText(String text, double size, Color color) {
     return Text(
-      Strings.rights_reserved,
+      text,
+      textAlign: TextAlign.center,
       style: TextStyle(
-        fontFamily: Fonts.product,
-        color: Color(0xFF85819C),
-        height: 1.5,
-        fontSize: 12.0,
-        //12.0
-        letterSpacing: 1.0,
-      ).copyWith(fontSize: ResponsiveWidget.isSmallScreen(context) ? 8 : 10.0),
-    );
-  }
-
-  Widget _buildSocialIcons() {
-    return Row(
-      mainAxisSize: MainAxisSize.max,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        GestureDetector(
-          onTap: () => _launchUrl("https://www.linkedin.com/in/prajyot-pawar-579a5834b/"),
-          child: CachedNetworkImage(
-            imageUrl: Assets.linkedin,
-            color: const Color(0xFF45405B),
-            height: 20.0,
-            width: 20.0,
-            errorWidget: (context, url, error) => const Icon(Icons.link, size: 20),
+        fontSize: size,
+        color: color,
+        fontWeight: FontWeight.bold,
+        shadows: [
+          Shadow(
+            color: Colors.black.withOpacity(0.8),
+            offset: const Offset(3, 3),
           ),
-        ),
-        const SizedBox(width: 16.0),
-        GestureDetector(
-          onTap: () => _launchUrl("https://medium.com/@prajyotp.dev"),
-          child: CachedNetworkImage(
-            imageUrl: Assets.evernote,
-            color: const Color(0xFF45405B),
-            height: 20.0,
-            width: 20.0,
-          ),
-        ),
-        const SizedBox(width: 16.0),
-        GestureDetector(
-          onTap: () => _launchUrl("https://github.com/prajyotpdev"),
-          child: CachedNetworkImage(imageUrl: Assets.github, color: const Color(0xFF45405B), height: 20.0, width: 20.0),
-        ),
-        const SizedBox(width: 16.0),
-        GestureDetector(
-          onTap: () => _launchUrl("https://x.com/PrajyotP326805"),
-          child: CachedNetworkImage(
-            imageUrl: Assets.twitter,
-            color: const Color(0xFF45405B),
-            height: 20.0,
-            width: 20.0,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
